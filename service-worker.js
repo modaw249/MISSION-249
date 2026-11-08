@@ -1,8 +1,8 @@
 "use strict";
 
-const CACHE_NAME = "mission249-v1";
+const CACHE_NAME = "mission249-v2";
 
-const FILES_TO_CACHE = [
+const FILES = [
   "./",
   "./index.html",
   "./style.css",
@@ -12,9 +12,7 @@ const FILES_TO_CACHE = [
 
 self.addEventListener("install", event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(FILES_TO_CACHE);
-    })
+    caches.open(CACHE_NAME).then(cache => cache.addAll(FILES))
   );
   self.skipWaiting();
 });
@@ -23,9 +21,8 @@ self.addEventListener("activate", event => {
   event.waitUntil(
     caches.keys().then(keys =>
       Promise.all(
-        keys
-          .filter(key => key !== CACHE_NAME)
-          .map(key => caches.delete(key))
+        keys.filter(key => key !== CACHE_NAME)
+            .map(key => caches.delete(key))
       )
     )
   );
@@ -36,8 +33,14 @@ self.addEventListener("fetch", event => {
   if (event.request.method !== "GET") return;
 
   event.respondWith(
-    caches.match(event.request).then(cached => {
-      return cached || fetch(event.request);
-    })
+    fetch(event.request).then(response => {
+      if (response.ok) {
+        const copy = response.clone();
+        caches.open(CACHE_NAME).then(cache =>
+          cache.put(event.request, copy)
+        );
+      }
+      return response;
+    }).catch(() => caches.match(event.request))
   );
 });
