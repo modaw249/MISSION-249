@@ -4,12 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#101820">
+
   <title>MISSION 249 | المهمة 249</title>
+
   <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
 </head>
+
 <body>
 
   <main class="game-container">
+
     <header class="game-header">
       <div class="logo">249</div>
       <div>
@@ -19,6 +24,7 @@
     </header>
 
     <section class="main-screen">
+
       <div class="status">
         <span>نظام الدرون</span>
         <span class="status-online">● جاهز</span>
@@ -37,14 +43,26 @@
 
       <button id="startButton">ابدأ المهمة</button>
       <button id="settingsButton">الإعدادات</button>
+
     </section>
 
     <footer>
       <p>MISSION 249 © 2026</p>
-      <p>تعمل دون اتصال بالإنترنت بعد تجهيز ملفات اللعبة</p>
+      <p>المهمة 249</p>
     </footer>
+
   </main>
 
   <script src="game.js"></script>
+
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./service-worker.js")
+          .catch(error => console.error("Service Worker:", error));
+      });
+    }
+  </script>
+
 </body>
 </html>
