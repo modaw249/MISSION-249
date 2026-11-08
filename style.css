@@ -1,0 +1,132 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-height: 100vh;
+  background: #080e14;
+  color: #e8edf2;
+  font-family: Arial, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 18px;
+}
+
+.game-container {
+  width: 100%;
+  max-width: 480px;
+  min-height: 90vh;
+  background: #111b24;
+  border: 1px solid #344653;
+  border-radius: 18px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+}
+
+.game-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border-bottom: 1px solid #344653;
+  padding-bottom: 20px;
+}
+
+.logo {
+  width: 58px;
+  height: 58px;
+  border-radius: 12px;
+  background: #bd8b35;
+  color: #101820;
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.game-header h1 {
+  font-size: 23px;
+  letter-spacing: 2px;
+}
+
+.game-header p {
+  color: #bd8b35;
+  margin-top: 5px;
+}
+
+.main-screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 22px;
+  padding: 35px 0;
+}
+
+.status {
+  display: flex;
+  justify-content: space-between;
+  background: #1b2934;
+  padding: 13px;
+  border-radius: 8px;
+}
+
+.status-online {
+  color: #6bd18a;
+}
+
+.game-title {
+  text-align: center;
+}
+
+.game-title h2 {
+  color: #d5a64f;
+  font-size: 27px;
+  margin-bottom: 10px;
+}
+
+.game-title p {
+  color: #aab8c3;
+  font-size: 14px;
+}
+
+.mission-info {
+  background: #1b2934;
+  border-right: 3px solid #bd8b35;
+  padding: 16px;
+  border-radius: 8px;
+  line-height: 2.2;
+  font-size: 14px;
+}
+
+button {
+  width: 100%;
+  min-height: 52px;
+  border: 0;
+  border-radius: 8px;
+  font-size: 17px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+#startButton {
+  background: #bd8b35;
+  color: #101820;
+}
+
+#settingsButton {
+  background: #263744;
+  color: white;
+}
+
+footer {
+  text-align: center;
+  color: #81919e;
+  font-size: 11px;
+  line-height: 2;
+  border-top: 1px solid #344653;
+  padding-top: 15px;
+}
