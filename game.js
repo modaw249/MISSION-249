@@ -1015,4 +1015,288 @@ document.getElementById("startButton").addEventListener("click", () => {
     screen.orientation.lock("portrait").catch(() => {});
   }
 });
+/* MISSION 249 — CITY EXPANSION & ACTION HUD UPDATE */
+
+(() => {
+  /* 1. Remove old river and bridge structures */
+  for (let i = objects.length - 1; i >= 0; i--) {
+    const o = objects[i];
+
+    const oldRiver =
+      Math.abs(o.x) < 1 &&
+      Math.abs(o.z - 125) < 2 &&
+      o.sx > 200;
+
+    const oldBridge =
+      Math.abs(o.z - 125) < 1 &&
+      o.sz > 30 &&
+      o.sx < 10 &&
+      o.y > 1;
+
+    const oldPiers =
+      Math.abs(o.x) <= 4 &&
+      o.z >= 95 && o.z <= 160 &&
+      o.sy > 1.5 && o.sy < 3;
+
+    const buildingsInRiver =
+      o.y > 1 &&
+      o.z > 108 && o.z < 142;
+
+    if (oldRiver || oldBridge || oldPiers || buildingsInRiver) {
+      objects.splice(i, 1);
+    }
+  }
+
+  /* 2. Nile separating the two city banks */
+  add(0, -0.9, 125, 260, 0.35, 25, [0.055, 0.25, 0.38]);
+
+  // River banks
+  add(0, -0.1, 97, 260, 0.5, 2, [0.56, 0.48, 0.34]);
+  add(0, -0.1, 153, 260, 0.5, 2, [0.56, 0.48, 0.34]);
+
+  /* 3. Wider bridge connecting both banks */
+  add(0, 1.1, 125, 10, 0.55, 43, [0.48, 0.49, 0.46]);
+
+  // Bridge barriers
+  add(-10.4, 2.2, 125, 0.4, 1.2, 43, [0.72, 0.69, 0.61]);
+  add(10.4, 2.2, 125, 0.4, 1.2, 43, [0.72, 0.69, 0.61]);
+
+  // Bridge road markings
+  for (let z = 106; z < 146; z += 8) {
+    add(0, 1.72, z, 0.13, 0.025, 2.5, [0.95, 0.84, 0.62]);
+  }
+
+  // Bridge supports
+  for (const z of [112, 138]) {
+    add(0, -0.2, z, 4, 1.3, 1.4, [0.43, 0.44, 0.42]);
+  }
+
+  /* 4. Expand Khartoum and Omdurman urban districts */
+  for (let side of [-1, 1]) {
+    for (let row = 0; row < 16; row++) {
+      for (let col = 0; col < 7; col++) {
+        const x = side * (52 + col * 12);
+        const z = -110 + row * 22;
+
+        // Leave a clear river corridor
+        if (z > 94 && z < 156) continue;
+
+        const height = 5 + ((row * 3 + col * 7) % 8) * 1.8;
+        const width = 3.5 + (col % 3);
+        const depth = 4 + (row % 3);
+
+        const colors = [
+          [0.68, 0.59, 0.47],
+          [0.72, 0.65, 0.53],
+          [0.58, 0.55, 0.48],
+          [0.64, 0.62, 0.55]
+        ];
+
+        add(x, height / 2, z, width, height / 2, depth,
+          colors[(row + col) % colors.length]);
+
+        add(x, height + 0.12, z, width + 0.15, 0.15,
+          depth + 0.15, [0.38, 0.37, 0.33]);
+
+        // Rooftop details
+        if ((row + col) % 4 === 0) {
+          add(x, height + 0.45, z, 0.8, 0.35, 0.8,
+            [0.46, 0.43, 0.36]);
+        }
+      }
+    }
+  }
+
+  // Additional cross streets
+  for (let z = -100; z < 400; z += 55) {
+    if (z > 95 && z < 155) continue;
+
+    add(0, 0.13, z, 115, 0.12, 3, [0.27, 0.27, 0.25]);
+  }
+
+  /* 5. Extend the flight area */
+  state.x = 0;
+  state.z = -12;
+
+  /* 6. Smooth joystick movement */
+  let targetX = 0;
+  let targetY = 0;
+
+  joystick.addEventListener("pointermove", e => {
+    if (joystickPointer !== e.pointerId) return;
+
+    const r = joystick.getBoundingClientRect();
+    const max = r.width * 0.34;
+    const dx = e.clientX - (r.left + r.width / 2);
+    const dy = e.clientY - (r.top + r.height / 2);
+
+    targetX = Math.max(-1, Math.min(1, dx / max));
+    targetY = Math.max(-1, Math.min(1, -dy / max));
+  });
+
+  joystick.addEventListener("pointerup", () => {
+    targetX = 0;
+    targetY = 0;
+  });
+
+  joystick.addEventListener("pointercancel", () => {
+    targetX = 0;
+    targetY = 0;
+  });
+
+  function smoothControls() {
+    state.joystickX += (targetX - state.joystickX) * 0.24;
+    state.joystickY += (targetY - state.joystickY) * 0.24;
+    requestAnimationFrame(smoothControls);
+  }
+
+  requestAnimationFrame(smoothControls);
+
+  /* 7. Remove explanatory text */
+  const joystickLabel = ui.querySelector(".m249-joystick-label");
+  if (joystickLabel) joystickLabel.style.display = "none";
+
+  document.getElementById("scanMessage").textContent = "SYSTEM READY";
+  document.getElementById("flightMessage").textContent = "FLIGHT CONTROL ACTIVE";
+
+  /* 8. Action game fire button */
+  const fireButton = document.createElement("button");
+  fireButton.id = "m249Fire";
+  fireButton.className = "m249-btn";
+  fireButton.textContent = "FIRE";
+  fireButton.style.cssText = `
+    min-height:55px;
+    background:linear-gradient(145deg,#9f2923,#541411);
+    border:2px solid #df7462;
+    color:white;
+    font-size:17px;
+    font-weight:900;
+    letter-spacing:2px;
+    box-shadow:0 0 14px #a52d2455;
+  `;
+
+  ui.querySelector(".m249-side").appendChild(fireButton);
+
+  /* 9. Fictional arcade firing effects */
+  const effects = document.createElement("div");
+  effects.id = "m249Effects";
+  effects.style.cssText = `
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    z-index:8;
+    overflow:hidden;
+  `;
+  gameWrap.appendChild(effects);
+
+  const effectStyle = document.createElement("style");
+  effectStyle.textContent = `
+    @keyframes m249Flash {
+      0% {opacity:0;transform:translate(-50%,-50%) scale(.3)}
+      30% {opacity:1;transform:translate(-50%,-50%) scale(1.3)}
+      100% {opacity:0;transform:translate(-50%,-50%) scale(2.5)}
+    }
+    .m249-flash {
+      position:absolute;
+      left:50%;top:50%;
+      width:75px;height:75px;
+      border:3px solid #ffdb8b;
+      border-radius:50%;
+      box-shadow:0 0 25px #ff9d37;
+      animation:m249Flash .24s ease-out forwards;
+    }
+    .m249-hit {
+      position:absolute;
+      left:50%;top:50%;
+      color:#ffcf70;
+      font-size:24px;
+      font-weight:bold;
+      transform:translate(-50%,-50%);
+      text-shadow:0 0 12px #f60;
+    }
+  `;
+  document.head.appendChild(effectStyle);
+
+  let fireCooldown = false;
+
+  fireButton.addEventListener("pointerdown", e => {
+    e.preventDefault();
+    if (fireCooldown || !state.running) return;
+
+    fireCooldown = true;
+    fireButton.classList.add("active");
+
+    const flash = document.createElement("div");
+    flash.className = "m249-flash";
+    effects.appendChild(flash);
+
+    const hit = document.createElement("div");
+    hit.className = "m249-hit";
+    hit.textContent = selected >= 0 ? "×" : "•";
+    effects.appendChild(hit);
+
+    document.getElementById("flightMessage").textContent =
+      selected >= 0 ? "SIMULATED IMPACT" : "FIRE EVENT";
+
+    setTimeout(() => {
+      flash.remove();
+      hit.remove();
+      fireButton.classList.remove("active");
+      fireCooldown = false;
+    }, 250);
+
+    // Short fictional arcade sound
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (AudioContext) {
+        const audio = new AudioContext();
+        const oscillator = audio.createOscillator();
+        const gain = audio.createGain();
+
+        oscillator.type = "sawtooth";
+        oscillator.frequency.setValueAtTime(130, audio.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(
+          45, audio.currentTime + 0.09
+        );
+
+        gain.gain.setValueAtTime(0.12, audio.currentTime);
+        gain.gain.exponentialRampToValueAtTime(
+          0.001, audio.currentTime + 0.1
+        );
+
+        oscillator.connect(gain);
+        gain.connect(audio.destination);
+        oscillator.start();
+        oscillator.stop(audio.currentTime + 0.1);
+        oscillator.onended = () => audio.close();
+      }
+    } catch (_) {}
+  });
+
+  fireButton.addEventListener("pointerup", () => {
+    fireButton.classList.remove("active");
+  });
+
+  fireButton.addEventListener("pointercancel", () => {
+    fireButton.classList.remove("active");
+  });
+
+  /* 10. Larger movement limits */
+  const originalRender = render;
+
+  render = function(now) {
+    state.x = Math.max(-220, Math.min(220, state.x));
+    state.z = Math.max(-190, Math.min(410, state.z));
+    originalRender(now);
+  };
+
+  /* 11. Cleaner HUD labels */
+  ui.querySelector(".m249-joystick-area").style.gap = "0";
+  ui.querySelector(".m249-bottom").style.opacity = "0.92";
+
+  document.getElementById("scanMessage").textContent = "SCAN: ACTIVE";
+  document.getElementById("flightMessage").textContent = "FLIGHT: READY";
+
+})();
+
 
