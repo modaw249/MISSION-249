@@ -723,3 +723,296 @@ window.addEventListener("resize",()=>{
  canvas.height=Math.floor(canvas.clientHeight*dpr);
  gl.viewport(0,0,canvas.width,canvas.height);
 });
+/* MISSION 249 — FULL SCREEN ACTION HUD */
+
+const fullScreenStyle = document.createElement("style");
+
+fullScreenStyle.textContent = `
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100%;
+  height: 100%;
+  overflow: hidden !important;
+  background: #050b10 !important;
+  overscroll-behavior: none;
+}
+
+.game-container {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  max-width: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  background: #050b10 !important;
+}
+
+#mission249-ui {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  display: none;
+  overflow: hidden;
+  background: #050b10;
+  z-index: 1000;
+  font-family: Arial, sans-serif;
+}
+
+.m249-game-wrap {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  overflow: hidden;
+  background: #182a32;
+}
+
+#gameCanvas {
+  position: absolute !important;
+  inset: 0 !important;
+  display: none;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  touch-action: none;
+}
+
+#scanOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.m249-top {
+  position: absolute;
+  z-index: 5;
+  top: env(safe-area-inset-top, 0px);
+  left: 0;
+  right: 0;
+  min-height: 48px;
+  padding: 10px 13px;
+  background: linear-gradient(180deg, #071017ed, #101b22b5);
+  border: 0;
+  border-bottom: 1px solid #9aa9a044;
+  backdrop-filter: blur(8px);
+}
+
+.m249-brand {
+  font-size: 15px;
+  letter-spacing: 1.5px;
+  color: #e5bd6c;
+}
+
+.m249-live {
+  font-size: 10px;
+  letter-spacing: .5px;
+}
+
+.m249-stats {
+  position: absolute;
+  z-index: 5;
+  top: calc(env(safe-area-inset-top, 0px) + 53px);
+  left: 7px;
+  right: 7px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  margin: 0;
+}
+
+.m249-stat {
+  background: #09151bc9;
+  border: 1px solid #8d9d9740;
+  border-radius: 4px;
+  padding: 6px 2px;
+  color: #c7d2cc;
+  font-size: 9px;
+  backdrop-filter: blur(5px);
+}
+
+.m249-stat strong {
+  font-size: 12px;
+  color: #e4c17c;
+}
+
+.m249-main {
+  position: absolute;
+  z-index: 6;
+  left: 0;
+  right: 0;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 82px);
+  padding: 0 13px;
+  grid-template-columns: 1fr 100px;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.m249-joystick-area,
+.m249-side {
+  pointer-events: auto;
+}
+
+.m249-joystick {
+  width: 125px;
+  height: 125px;
+  background: radial-gradient(circle, #263d43d9, #101d24c9);
+  border: 2px solid #9aa99b88;
+  box-shadow: 0 0 18px #0008, inset 0 0 20px #0008;
+}
+
+.m249-knob {
+  width: 48px;
+  height: 48px;
+  background: radial-gradient(circle at 35% 30%, #d7bd83, #655536 80%);
+  border: 2px solid #ead39c;
+}
+
+.m249-joystick-label {
+  color: #e5e8df;
+  text-shadow: 0 1px 4px black;
+  font-size: 9px;
+}
+
+.m249-side {
+  gap: 5px;
+}
+
+.m249-btn {
+  min-height: 34px;
+  background: #0b1922df;
+  border: 1px solid #8b9d9c88;
+  color: #e8e9df;
+  border-radius: 4px;
+  font-size: 9px;
+  backdrop-filter: blur(5px);
+}
+
+.m249-btn.active {
+  background: #9d793c;
+  border-color: #e4c17c;
+  color: #fff;
+}
+
+.m249-bottom {
+  position: absolute;
+  z-index: 6;
+  bottom: env(safe-area-inset-bottom, 0px);
+  left: 0;
+  right: 0;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+  margin: 0;
+  padding: 6px;
+  background: linear-gradient(0deg, #071017f2, #101b22c9);
+}
+
+.m249-panel {
+  min-height: 42px;
+  padding: 5px 7px;
+  border: 1px solid #71817d55;
+  border-radius: 4px;
+  background: #0b171dcc;
+  font-size: 9px;
+}
+
+.m249-panel strong {
+  color: #d7b56f;
+}
+
+.m249-marker {
+  border: 1px solid #e4c17c;
+  background: #07141ddd;
+  box-shadow: 0 0 10px #d3aa4b55;
+}
+
+#mission249-ui::after {
+  content: "+";
+  position: absolute;
+  z-index: 4;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #e4d5a1a0;
+  font-size: 24px;
+  font-weight: 200;
+  pointer-events: none;
+}
+
+.main-screen {
+  position: fixed !important;
+  inset: 0 !important;
+  min-height: 100dvh !important;
+  width: 100vw !important;
+  padding: 25px 16px !important;
+  background:
+    radial-gradient(ellipse at 50% 35%, #233943, #0a141b 65%, #05090d) !important;
+  color: #e8e8df !important;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+#startButton {
+  width: min(90%, 360px);
+  min-height: 55px;
+  border: 1px solid #e5c27b;
+  border-radius: 5px;
+  background: linear-gradient(135deg, #b38b45, #735328);
+  color: white;
+  font-size: 17px;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+#settingsButton {
+  width: min(90%, 360px);
+  min-height: 48px;
+  margin-top: 12px;
+  border: 1px solid #65777d;
+  border-radius: 5px;
+  background: #15232c;
+  color: #e5e5dc;
+}
+
+@media (max-height: 650px) {
+  .m249-joystick {
+    width: 105px;
+    height: 105px;
+  }
+  .m249-main {
+    bottom: 72px;
+  }
+  .m249-btn {
+    min-height: 29px;
+  }
+}
+`;
+
+document.head.appendChild(fullScreenStyle);
+
+/* Request native browser fullscreen when starting */
+document.getElementById("startButton").addEventListener("click", () => {
+  const root = document.documentElement;
+
+  if (root.requestFullscreen) {
+    root.requestFullscreen().catch(() => {});
+  }
+
+  if (screen.orientation && screen.orientation.lock) {
+    screen.orientation.lock("portrait").catch(() => {});
+  }
+});
+
